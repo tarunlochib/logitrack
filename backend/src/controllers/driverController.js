@@ -1,23 +1,59 @@
 const { PrismaClient } = require('@prisma/client');
+const bcrypt = require('bcrypt');
 const { get } = require('../routes/authRoutes');
 const prisma = new PrismaClient();
 
 // Create a new driver
 const createDriver = async (req, res) => {
-    const { name, phone, licenseNumber, vehicleId } = req.body;
+    const { name, phone, licenseNumber, vehicleId, email, password } = req.body;
 
     try {
+        // Hash the password
+        const hashedPassword = await bcrypt.hash(password, 10);
+        
+        // First, create a user account for the driver
+        const user = await prisma.user.create({
+            data: {
+                name,
+                email,
+                password: hashedPassword,
+                phone,
+                role: 'DRIVER'
+            }
+        });
+
+        // Then create the driver linked to the user
         const driver = await prisma.driver.create({
             data: {
+                userId: user.id,
                 name,
                 phone,
                 licenseNumber,
-                vehicleId: vehicleId ? parseInt(vehicleId) : null, // Ensure vehicleId is stored as an integer 
+                vehicleId: vehicleId ? parseInt(vehicleId) : null,
             },
+            include: {
+                user: true,
+                vehicle: true
+            }
         });
+        
         res.status(201).json({ message: 'Driver created successfully', driver });
     } catch (error) {
         console.error('Error creating driver:', error);
+        
+        // Handle specific errors
+        if (error.code === 'P2002') {
+            if (error.meta?.target?.includes('email')) {
+                return res.status(400).json({ message: 'Email already exists' });
+            }
+            if (error.meta?.target?.includes('phone')) {
+                return res.status(400).json({ message: 'Phone number already exists' });
+            }
+            if (error.meta?.target?.includes('licenseNumber')) {
+                return res.status(400).json({ message: 'License number already exists' });
+            }
+        }
+        
         res.status(500).json({ message: 'Internal server error' });
     }
 };

@@ -9,6 +9,8 @@ import ModernButton from "../components/ModernButton";
 export default function AddDriver() {
     const [formData, setFormData] = useState({
         name: "",
+        email: "",
+        password: "",
         phone: "",
         licenseNumber: "",
         vehicleId: "",
@@ -51,12 +53,31 @@ export default function AddDriver() {
             alert("Please enter the driver's name.");
             return false;
         }
+        if (!formData.email.trim()) {
+            alert("Please enter the driver's email.");
+            return false;
+        }
+        if (!formData.password.trim()) {
+            alert("Please enter the driver's password.");
+            return false;
+        }
         if (!formData.phone.trim()) {
             alert("Please enter the driver's phone number.");
             return false;
         }
         if (!formData.licenseNumber.trim()) {
             alert("Please enter the driver's license number.");
+            return false;
+        }
+        // Email validation
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(formData.email.trim())) {
+            alert("Please enter a valid email address.");
+            return false;
+        }
+        // Password validation (minimum 6 characters)
+        if (formData.password.trim().length < 6) {
+            alert("Password must be at least 6 characters long.");
             return false;
         }
         // Phone number validation (basic)
@@ -79,6 +100,8 @@ export default function AddDriver() {
 
         const payload = {
             name: formData.name.trim(),
+            email: formData.email.trim(),
+            password: formData.password.trim(),
             phone: formData.phone.trim(),
             licenseNumber: formData.licenseNumber.trim(),
             vehicleId: formData.vehicleId || null,
@@ -127,6 +150,28 @@ export default function AddDriver() {
                                 value={formData.name}
                                 onChange={handleChange}
                                 placeholder="e.g., John Doe"
+                                required
+                            />
+                        </div>
+                        <div>
+                            <ModernInput
+                                label="Email"
+                                name="email"
+                                type="email"
+                                value={formData.email}
+                                onChange={handleChange}
+                                placeholder="e.g., john.doe@example.com"
+                                required
+                            />
+                        </div>
+                        <div>
+                            <ModernInput
+                                label="Password"
+                                name="password"
+                                type="password"
+                                value={formData.password}
+                                onChange={handleChange}
+                                placeholder="Enter password"
                                 required
                             />
                         </div>
