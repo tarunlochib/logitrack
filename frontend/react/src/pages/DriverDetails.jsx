@@ -27,7 +27,7 @@ export default function DriverDetails() {
             try {
                 setLoading(true);
                 setError(null);
-                const res = await axios.get(`http://localhost:5000/api/drivers/${id}`, {
+                const res = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/drivers/${id}`, {
                     headers: {
                         Authorization: `Bearer ${token}`,
                     },
@@ -46,7 +46,7 @@ export default function DriverDetails() {
     useEffect(() => {
         const fetchVehicles = async () => {
             try {
-                const response = await axios.get("http://localhost:5000/api/vehicles", {
+                const response = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/vehicles`, {
                     headers: {
                         Authorization: `Bearer ${token}`,
                     },
@@ -67,7 +67,7 @@ export default function DriverDetails() {
 
         setAssigning(true);
         try {
-            await axios.post("http://localhost:5000/api/drivers/assign", 
+            await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/drivers/assign`, 
                 { driverId: id, vehicleId: selectedVehicleId },
                 { headers: { Authorization: `Bearer ${token}` } }
             );
@@ -75,7 +75,7 @@ export default function DriverDetails() {
             setShowAssignmentModal(false);
             setSelectedVehicleId("");
             // Refresh driver data
-            const res = await axios.get(`http://localhost:5000/api/drivers/${id}`, {
+            const res = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/drivers/${id}`, {
                 headers: { Authorization: `Bearer ${token}` },
             });
             setDriver(res.data);
@@ -94,12 +94,12 @@ export default function DriverDetails() {
 
         setAssigning(true);
         try {
-            await axios.post(`http://localhost:5000/api/drivers/${id}/unassign`, {}, {
+            await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/drivers/${id}/unassign`, {}, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             alert("Driver unassigned from vehicle successfully!");
             // Refresh driver data
-            const res = await axios.get(`http://localhost:5000/api/drivers/${id}`, {
+            const res = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/drivers/${id}`, {
                 headers: { Authorization: `Bearer ${token}` },
             });
             setDriver(res.data);
@@ -118,7 +118,7 @@ export default function DriverDetails() {
 
         setDeleting(true);
         try {
-            await axios.delete(`http://localhost:5000/api/drivers/${id}`, {
+            await axios.delete(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/drivers/${id}`, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 },

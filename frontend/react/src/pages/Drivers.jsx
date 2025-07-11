@@ -16,7 +16,7 @@ export default function Drivers() {
     const fetchDrivers = async () => {
         try {
             const token = localStorage.getItem("token");
-            const response = await axios.get("http://localhost:5000/api/drivers", {
+            const response = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/drivers`, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 },
@@ -43,7 +43,7 @@ export default function Drivers() {
         if (window.confirm("Are you sure you want to delete this driver?")) {
             try {
                 const token = localStorage.getItem("token");
-                await axios.delete(`http://localhost:5000/api/drivers/${driverId}`, {
+                await axios.delete(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/drivers/${driverId}`, {
                     headers: {
                         Authorization: `Bearer ${token}`,
                     },

@@ -43,8 +43,8 @@ export default function Shipments() {
                 const token = localStorage.getItem("token");
                 const headers = { Authorization: `Bearer ${token}` };
                 const [driversResponse, vehiclesResponse] = await Promise.all([
-                    axios.get(`${import.meta.env.VITE_API_URL}/api/drivers/with-user`, { headers }),
-                    axios.get(`${import.meta.env.VITE_API_URL}/api/vehicles`, { headers }),
+                    axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/drivers/with-user`, { headers }),
+                    axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/vehicles`, { headers }),
                 ]);
                 setDrivers(driversResponse.data);
                 setVehicles(vehiclesResponse.data);
@@ -67,10 +67,13 @@ export default function Shipments() {
                 ...Object.fromEntries(Object.entries(filtersArg).filter(([_, v]) => v))
             };
             console.log("Shipments API params:", params); // Debug log
-            const response = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/shipments`, {
-                headers: { Authorization: `Bearer ${token}` },
-                params
-            });
+            const response = await axios.get(
+                `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/shipments`,
+                {
+                    headers: { Authorization: `Bearer ${token}` },
+                    params,
+                }
+            );
             setShipments(response.data.shipments);
             setTotal(response.data.total);
             setPage(response.data.page);

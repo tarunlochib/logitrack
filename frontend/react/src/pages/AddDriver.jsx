@@ -23,7 +23,7 @@ export default function AddDriver() {
         const fetchVehicles = async () => {
             try {
                 const token = localStorage.getItem("token");
-                const response = await axios.get("http://localhost:5000/api/vehicles", {
+                const response = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/vehicles`, {
                     headers: {
                         Authorization: `Bearer ${token}`,
                     },
@@ -86,7 +86,7 @@ export default function AddDriver() {
 
         try {
             const token = localStorage.getItem("token");
-            await axios.post("http://localhost:5000/api/drivers", payload, {
+            await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/drivers`, payload, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 },

@@ -30,7 +30,7 @@ export default function EditDriver() {
                 setError(null);
 
                 // Fetch vehicles
-                const vehiclesResponse = await axios.get("http://localhost:5000/api/vehicles", {
+                const vehiclesResponse = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/vehicles`, {
                     headers: {
                         Authorization: `Bearer ${token}`,
                     },
@@ -38,7 +38,7 @@ export default function EditDriver() {
                 setVehicles(vehiclesResponse.data);
 
                 // Fetch driver data
-                const driverResponse = await axios.get(`http://localhost:5000/api/drivers/${id}`, {
+                const driverResponse = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/drivers/${id}`, {
                     headers: {
                         Authorization: `Bearer ${token}`,
                     },
@@ -106,7 +106,7 @@ export default function EditDriver() {
         };
 
         try {
-            await axios.put(`http://localhost:5000/api/drivers/${id}`, payload, {
+            await axios.put(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/drivers/${id}`, payload, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 },

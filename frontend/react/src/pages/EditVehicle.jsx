@@ -24,7 +24,7 @@ export default function EditVehicle() {
             try {
                 setLoading(true);
                 setError(null);
-                const res = await axios.get(`http://localhost:5000/api/vehicles/${id}`, {
+                const res = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/vehicles/${id}`, {
                     headers: {
                         Authorization: `Bearer ${token}`,
                     },
@@ -87,7 +87,7 @@ export default function EditVehicle() {
         };
 
         try {
-            await axios.put(`http://localhost:5000/api/vehicles/${id}`, payload, {
+            await axios.put(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/vehicles/${id}`, payload, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 },

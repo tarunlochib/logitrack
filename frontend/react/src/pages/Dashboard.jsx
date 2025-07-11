@@ -23,12 +23,12 @@ export default function Dashboard() {
         const fetchDashboardData = async () => {
             try {
                 const token = localStorage.getItem("token");
-                const response = await axios.get("http://localhost:5000/api/shipments", {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                    },
-                    params: { page: 1, pageSize: 1000 } // fetch all for stats (or adjust as needed)
-                });
+                const response = await axios.get(
+                    `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/shipments?page=1&pageSize=1000`,
+                    {
+                        headers: { Authorization: `Bearer ${token}` },
+                    }
+                );
                 const allShipments = response.data.shipments || [];
                 setShipments(allShipments.slice(0, 5)); // Show only recent 5 shipments
                 // Calculate statistics

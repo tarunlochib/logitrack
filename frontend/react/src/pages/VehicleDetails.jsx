@@ -21,7 +21,7 @@ export default function VehicleDetails() {
             try {
                 setLoading(true);
                 setError(null);
-                const res = await axios.get(`http://localhost:5000/api/vehicles/${id}`, {
+                const res = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/vehicles/${id}`, {
                     headers: {
                         Authorization: `Bearer ${token}`,
                     },
@@ -44,7 +44,7 @@ export default function VehicleDetails() {
 
         setDeleting(true);
         try {
-            await axios.delete(`http://localhost:5000/api/vehicles/${id}`, {
+            await axios.delete(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/vehicles/${id}`, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 },

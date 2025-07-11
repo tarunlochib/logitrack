@@ -14,7 +14,7 @@ export default function Vehicles() {
     const fetchVehicles = async () => {
         try {
             const token = localStorage.getItem("token");
-            const response = await axios.get("http://localhost:5000/api/vehicles", {
+            const response = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/vehicles`, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 },
@@ -41,7 +41,7 @@ export default function Vehicles() {
         if (window.confirm("Are you sure you want to delete this vehicle?")) {
             try {
                 const token = localStorage.getItem("token");
-                await axios.delete(`http://localhost:5000/api/vehicles/${vehicleId}`, {
+                await axios.delete(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/vehicles/${vehicleId}`, {
                     headers: {
                         Authorization: `Bearer ${token}`,
                     },
