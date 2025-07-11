@@ -1,7 +1,7 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import axios from "axios";
-import Layout from "../components/Layout";
+import Layout from '../components/Layout';
 import ModernCard from "../components/ModernCard";
 import ModernTable from "../components/ModernTable";
 import StatusBadge from "../components/StatusBadge";

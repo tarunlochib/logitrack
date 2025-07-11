@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
-import Layout from "../components/Layout";
+import Layout from '../components/Layout';
 import ModernInput from "../components/ModernInput";
 import ModernSelect from "../components/ModernSelect";
 import ModernButton from "../components/ModernButton";

@@ -48,8 +48,8 @@ export default function AddShipment() {
         const headers = { Authorization: `Bearer ${token}` };
 
         const [driversResponse, vehiclesResponse] = await Promise.all([
-          axios.get("http://localhost:5000/api/drivers/with-user", { headers }),
-          axios.get("http://localhost:5000/api/vehicles", { headers }),
+          axios.get(`${import.meta.env.VITE_API_URL}/api/drivers/with-user`, { headers }),
+          axios.get(`${import.meta.env.VITE_API_URL}/api/vehicles`, { headers }),
         ]);
 
         setDrivers(driversResponse.data);
@@ -163,7 +163,7 @@ export default function AddShipment() {
 
     try {
       const token = localStorage.getItem("token");
-      await axios.post("http://localhost:5000/api/shipments", payload, {
+      await axios.post(`${import.meta.env.VITE_API_URL}/api/shipments`, payload, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
