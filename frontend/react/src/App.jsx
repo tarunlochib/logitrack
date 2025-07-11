@@ -1,6 +1,6 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Login from './pages/login';
-import Dashboard from './pages/dashboard';
+import Dashboard from './pages/Dashboard';
 import ProtectedRoute from './routes/ProtectedRoute';
 import Shipments from './pages/Shipments';
 import AddShipment from './pages/AddShipment';
