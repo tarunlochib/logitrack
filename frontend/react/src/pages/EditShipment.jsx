@@ -53,15 +53,15 @@ export default function EditShipment() {
 
                 // Fetch drivers and vehicles
                 const [driversResponse, vehiclesResponse] = await Promise.all([
-                    axios.get("http://localhost:5000/api/drivers/with-user", { headers: { Authorization: `Bearer ${token}` } }),
-                    axios.get("http://localhost:5000/api/vehicles", { headers: { Authorization: `Bearer ${token}` } }),
+                    axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/drivers/with-user`, { headers: { Authorization: `Bearer ${token}` } }),
+                    axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/vehicles`, { headers: { Authorization: `Bearer ${token}` } }),
                 ]);
 
                 setDrivers(driversResponse.data);
                 setVehicles(vehiclesResponse.data);
 
                 // Fetch shipment data
-                const shipmentResponse = await axios.get(`http://localhost:5000/api/shipments/${id}`, {
+                const shipmentResponse = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/shipments/${id}`, {
                     headers: { Authorization: `Bearer ${token}` },
                 });
 
@@ -203,7 +203,7 @@ export default function EditShipment() {
         };
 
         try {
-            await axios.put(`http://localhost:5000/api/shipments/${id}`, payload, {
+            await axios.put(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/shipments/${id}`, payload, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 },

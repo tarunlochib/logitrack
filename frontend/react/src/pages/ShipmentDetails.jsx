@@ -35,7 +35,7 @@ export default function ShipmentDetails() {
             try {
                 setLoading(true);
                 setError(null);
-                const res = await axios.get(`http://localhost:5000/api/shipments/${id}`, {
+                const res = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/shipments/${id}`, {
                     headers: {
                         Authorization: `Bearer ${token}`,
                     },
@@ -58,7 +58,7 @@ export default function ShipmentDetails() {
 
         setDeleting(true);
         try {
-            await axios.delete(`http://localhost:5000/api/shipments/${id}`, {
+            await axios.delete(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/shipments/${id}`, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 },
@@ -76,11 +76,11 @@ export default function ShipmentDetails() {
     const handleMarkCompleted = async () => {
         setCompleting(true);
         try {
-            await axios.patch(`http://localhost:5000/api/shipments/${id}/complete`, {}, {
+            await axios.patch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/shipments/${id}/complete`, {}, {
                 headers: { Authorization: `Bearer ${token}` },
             });
             // Refresh shipment details
-            const res = await axios.get(`http://localhost:5000/api/shipments/${id}`, {
+            const res = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/shipments/${id}`, {
                 headers: { Authorization: `Bearer ${token}` },
             });
             setShipment(res.data);
@@ -94,7 +94,7 @@ export default function ShipmentDetails() {
 
     const handleDownloadPDF = async () => {
         try {
-            const response = await fetch(`http://localhost:5000/api/shipments/${id}/pdf`, {
+            const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/shipments/${id}/pdf`, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 },
@@ -130,11 +130,11 @@ export default function ShipmentDetails() {
         const newStatus = e.target.value;
         setStatusUpdating(true);
         try {
-            await axios.patch(`http://localhost:5000/api/shipments/${id}/status`, { status: newStatus }, {
+            await axios.patch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/shipments/${id}/status`, { status: newStatus }, {
                 headers: { Authorization: `Bearer ${token}` },
             });
             // Refresh shipment details
-            const res = await axios.get(`http://localhost:5000/api/shipments/${id}`, {
+            const res = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/shipments/${id}`, {
                 headers: { Authorization: `Bearer ${token}` },
             });
             setShipment(res.data);
