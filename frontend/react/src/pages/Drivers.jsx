@@ -105,7 +105,7 @@ export default function Drivers() {
         }
     };
 
-    const filteredDrivers = drivers.filter(driver => {
+    const filteredDrivers = Array.isArray(drivers) ? drivers.filter(driver => {
         const matchesSearch = driver.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                             driver.phone?.includes(searchTerm) ||
                             driver.licenseNumber?.toLowerCase().includes(searchTerm.toLowerCase());
@@ -115,11 +115,11 @@ export default function Drivers() {
                             (filterStatus === "unassigned" && !driver.vehicle);
         
         return matchesSearch && matchesStatus;
-    });
+    }) : [];
 
     const getDriverStats = () => {
-        const total = drivers.length;
-        const assigned = drivers.filter(d => d.vehicle).length;
+        const total = Array.isArray(drivers) ? drivers.length : 0;
+        const assigned = Array.isArray(drivers) ? drivers.filter(d => d.vehicle).length : 0;
         const unassigned = total - assigned;
         return { total, assigned, unassigned };
     };
@@ -215,7 +215,7 @@ export default function Drivers() {
                             <p className="text-gray-600">Loading drivers...</p>
                         </div>
                     </div>
-                ) : filteredDrivers.length === 0 ? (
+                ) : Array.isArray(filteredDrivers) && filteredDrivers.length === 0 ? (
                     <div className="text-center py-12">
                         <div className="bg-gray-50 border border-gray-200 rounded-2xl p-8 max-w-md mx-auto">
                             <div className="text-gray-400 text-6xl mb-4">👨‍💼</div>

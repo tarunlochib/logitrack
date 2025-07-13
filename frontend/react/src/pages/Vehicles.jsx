@@ -104,7 +104,7 @@ export default function Vehicles() {
         }
     };
 
-    const filteredVehicles = vehicles.filter(vehicle => {
+    const filteredVehicles = Array.isArray(vehicles) ? vehicles.filter(vehicle => {
         const matchesSearch = vehicle.number?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                             vehicle.model?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                             vehicle.driver?.name?.toLowerCase().includes(searchTerm.toLowerCase());
@@ -114,11 +114,11 @@ export default function Vehicles() {
                             (filterStatus === "in-use" && !vehicle.isAvailable);
         
         return matchesSearch && matchesStatus;
-    });
+    }) : [];
 
     const getVehicleStats = () => {
-        const total = vehicles.length;
-        const available = vehicles.filter(v => v.isAvailable).length;
+        const total = Array.isArray(vehicles) ? vehicles.length : 0;
+        const available = Array.isArray(vehicles) ? vehicles.filter(v => v.isAvailable).length : 0;
         const inUse = total - available;
         return { total, available, inUse };
     };
@@ -214,7 +214,7 @@ export default function Vehicles() {
                             <p className="text-gray-600">Loading vehicles...</p>
                         </div>
                     </div>
-                ) : filteredVehicles.length === 0 ? (
+                ) : Array.isArray(filteredVehicles) && filteredVehicles.length === 0 ? (
                     <div className="text-center py-12">
                         <div className="bg-gray-50 border border-gray-200 rounded-2xl p-8 max-w-md mx-auto">
                             <div className="text-gray-400 text-6xl mb-4">🚛</div>

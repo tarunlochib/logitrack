@@ -218,8 +218,8 @@ export default function Shipments() {
         { value: "PAID", label: "Paid" },
         { value: "TO_BE_BILLED", label: "To Be Billed" },
     ];
-    const driverOptions = (drivers || []).map(driver => ({ value: driver.id, label: `${driver.user?.name || ''} (${driver.user?.phone || ''})` }));
-    const vehicleOptions = (vehicles || []).map(vehicle => ({ value: vehicle.id, label: `${vehicle.number} - ${vehicle.model}` }));
+    const driverOptions = (Array.isArray(drivers) ? drivers : []).map(driver => ({ value: driver.id, label: `${driver.user?.name || ''} (${driver.user?.phone || ''})` }));
+    const vehicleOptions = (Array.isArray(vehicles) ? vehicles : []).map(vehicle => ({ value: vehicle.id, label: `${vehicle.number} - ${vehicle.model}` }));
 
     // Count active filters
     const activeFilterCount = Object.values(filters).filter(Boolean).length;
@@ -431,7 +431,7 @@ export default function Shipments() {
                                     </tr>
                                 </thead>
                                 <tbody className="bg-white/50 divide-y divide-gray-200/60">
-                                    {shipments.length === 0 ? (
+                                    {Array.isArray(shipments) && shipments.length === 0 ? (
                                         <tr>
                                             <td colSpan={8} className="text-center py-12">
                                                 <div className="flex flex-col items-center space-y-3">
@@ -443,7 +443,7 @@ export default function Shipments() {
                                                 </div>
                                             </td>
                                         </tr>
-                                    ) : shipments.map((shipment) => (
+                                    ) : Array.isArray(shipments) && shipments.map((shipment) => (
                                         <tr
                                             key={shipment.id}
                                             className="hover:bg-blue-50/60 cursor-pointer group transition-all duration-200"
