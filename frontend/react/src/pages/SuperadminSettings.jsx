@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import ModernInput from '../components/ModernInput';
 import ModernSelect from '../components/ModernSelect';
 import ModernButton from '../components/ModernButton';
+import { apiFetch } from '../api';
 
 const defaultSettings = {
   platformName: '',
@@ -24,11 +25,8 @@ export default function SuperadminSettings() {
       setFetching(true);
       setError('');
       try {
-        const token = localStorage.getItem('token');
-        const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/superadmin/settings`, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-        if (!res.ok) throw new Error('Failed to fetch settings');
+        const res = await apiFetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/superadmin/settings`);
+        if (!res || !res.ok) throw new Error('Failed to fetch settings');
         const data = await res.json();
         setSettings({ ...defaultSettings, ...data });
       } catch (err) {
@@ -55,16 +53,11 @@ export default function SuperadminSettings() {
     setSuccess('');
     setError('');
     try {
-      const token = localStorage.getItem('token');
-      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/superadmin/settings`, {
+      const res = await apiFetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/superadmin/settings`, {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
         body: JSON.stringify({ data: settings })
       });
-      if (!res.ok) throw new Error('Failed to update settings');
+      if (!res || !res.ok) throw new Error('Failed to update settings');
       setSuccess('Settings updated successfully!');
     } catch (err) {
       setError('Failed to update settings.');

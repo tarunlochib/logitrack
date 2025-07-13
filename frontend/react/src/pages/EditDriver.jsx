@@ -309,9 +309,8 @@ export default function EditDriver() {
                                 <ModernButton
                                     type="submit"
                                     variant="primary"
-                                    className="text-sm px-4 py-2"
+                                    className="text-sm px-4 py-2 flex items-center justify-center space-x-2"
                                     disabled={submitting}
-                                    className="flex items-center justify-center space-x-2"
                                 >
                                     {submitting ? (
                                         <>
