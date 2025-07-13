@@ -16,6 +16,9 @@ const signup = async (req, res) => {
 
         const hashedPassword = await bcrypt.hash(password, 10);
 
+        // Set tenantId to null for SUPERADMIN, otherwise use provided or request tenant
+        const userTenantId = role === 'SUPERADMIN' ? null : (tenantId || req.tenant?.id);
+
         const user  = await prisma.user.create({
             data: {
                 name,
@@ -23,19 +26,19 @@ const signup = async (req, res) => {
                 password: hashedPassword,
                 role,
                 phone,
-                tenantId: tenantId || req.tenant?.id
+                tenantId: userTenantId
             }
         });
 
-        // If the user is a DRIVER, create a Driver profile
-        if (role === 'DRIVER') {
+        // Only create Driver profile if role is DRIVER and not SUPERADMIN
+        if (role === 'DRIVER' && userTenantId) {
             await prisma.driver.create({
                 data: {
                     userId: user.id,
                     name,
                     phone,
                     licenseNumber,
-                    tenantId: tenantId || req.tenant?.id
+                    tenantId: userTenantId
                 }
             });
         }
@@ -45,7 +48,7 @@ const signup = async (req, res) => {
         console.error('Error during sign up:', error);
         res.status(500).json({ message: 'Internal server error' });
     }
-    };
+};
 
 // Sign In Controller
 

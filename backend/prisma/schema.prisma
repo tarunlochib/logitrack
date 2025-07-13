@@ -53,8 +53,8 @@ model user {
   createdAt DateTime @default(now())
   isActive  Boolean  @default(true)
   // Multi-tenant relation
-  tenantId  Int
-  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenantId  Int?
+  tenant    Tenant? @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   driver    Driver?
 }
 
