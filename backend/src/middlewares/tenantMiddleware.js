@@ -8,18 +8,18 @@ const identifyTenant = async (req, res, next) => {
         console.log('PROD DEBUG: All headers:', req.headers);
         let tenantSlug = null;
 
-        // Method 1: Extract from subdomain
-        const host = req.get('host');
-        if (host && host.includes('.')) {
-            const subdomain = host.split('.')[0];
-            if (subdomain !== 'www' && subdomain !== 'api') {
-                tenantSlug = subdomain;
-            }
-        }
+        // Method 1: Extract from custom header (highest priority)
+        tenantSlug = req.get('X-Tenant-Slug');
 
-        // Method 2: Extract from custom header
+        // Method 2: Extract from subdomain (only if no custom header)
         if (!tenantSlug) {
-            tenantSlug = req.get('X-Tenant-Slug');
+            const host = req.get('host');
+            if (host && host.includes('.')) {
+                const subdomain = host.split('.')[0];
+                if (subdomain !== 'www' && subdomain !== 'api') {
+                    tenantSlug = subdomain;
+                }
+            }
         }
 
         // Method 3: Extract from URL path (for API routes)
