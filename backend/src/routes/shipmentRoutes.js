@@ -14,23 +14,24 @@ const {
 const { getOverview } = require('../controllers/analyticsController');
 
 const { verifyToken } = require('../middlewares/authMiddleware');
+const { requireTenant } = require('../middlewares/tenantMiddleware');
 
 const { generateShipmentPDF } = require('../utils/pdfGenerator');
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
-router.post('/', verifyToken, createShipment); // Create a new shipment
-router.get('/', verifyToken, getShipments); // Get all shipments
-router.get('/', verifyToken, getShipments); // Get all shipments
-router.get('/:id', verifyToken, getShipmentById); // Get a shipment by ID
-router.put('/:id', verifyToken, updateShipment); // Update a shipment by ID
-router.delete('/:id', verifyToken, deleteShipment); // Delete a shipment by ID
-router.get('/search/advanced', verifyToken, searchShipments); // Search shipments by consignee or consignor name
-router.patch('/:id/complete', verifyToken, markShipmentCompleted); // Mark shipment as completed
-router.patch('/:id/status', verifyToken, updateShipmentStatus); // Update shipment status (for admin roles)
-router.get('/analytics/overview', getOverview);
+router.post('/', verifyToken, requireTenant, createShipment); // Create a new shipment
+router.get('/', verifyToken, requireTenant, getShipments); // Get all shipments
+router.get('/', verifyToken, requireTenant, getShipments); // Get all shipments
+router.get('/:id', verifyToken, requireTenant, getShipmentById); // Get a shipment by ID
+router.put('/:id', verifyToken, requireTenant, updateShipment); // Update a shipment by ID
+router.delete('/:id', verifyToken, requireTenant, deleteShipment); // Delete a shipment by ID
+router.get('/search/advanced', verifyToken, requireTenant, searchShipments); // Search shipments by consignee or consignor name
+router.patch('/:id/complete', verifyToken, requireTenant, markShipmentCompleted); // Mark shipment as completed
+router.patch('/:id/status', verifyToken, requireTenant, updateShipmentStatus); // Update shipment status (for admin roles)
+router.get('/analytics/overview', verifyToken, requireTenant, getOverview);
 
-router.get('/:id/pdf', verifyToken, async (req, res) => {
+router.get('/:id/pdf', verifyToken, requireTenant, async (req, res) => {
     const { id } = req.params;
     try {
         // Fetch shipment directly from Prisma

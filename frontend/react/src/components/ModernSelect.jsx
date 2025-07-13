@@ -18,7 +18,7 @@ export default function ModernSelect({
         value={value}
         onChange={onChange}
         disabled={disabled}
-        className={`w-full rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-400 focus:border-blue-400 py-2 px-3 bg-white appearance-none ${
+        className={`w-full rounded-md border border-gray-300 focus:ring-2 focus:ring-blue-400 focus:border-blue-400 py-1.5 px-2 bg-white appearance-none text-sm h-9 ${
           error ? "border-red-500" : ""
         } transition-colors duration-150 outline-none`}
         {...props}
@@ -31,4 +31,4 @@ export default function ModernSelect({
       {error && <div className="mt-1 text-sm text-red-600">{error}</div>}
     </div>
   );
-} 
+}

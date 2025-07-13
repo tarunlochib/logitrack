@@ -20,6 +20,28 @@ enum Role {
   DRIVER
 }
 
+// Multi-tenant support
+model Tenant {
+  id          Int      @id @default(autoincrement())
+  name        String   @unique
+  slug        String   @unique // URL-friendly identifier
+  domain      String?  @unique // Custom domain
+  schemaName  String   @unique // Database schema name
+  gstNumber   String?  // GST Number for transporter
+  isActive    Boolean  @default(true)
+  settings    Json?    // Tenant-specific settings
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  users     user[]
+  vehicles  Vehicle[]
+  drivers   Driver[]
+  shipments Shipment[]
+  employees Employee[]
+  expenses  Expense[]
+}
+
 model user {
   id        Int      @id @default(autoincrement())
   name      String
@@ -29,6 +51,10 @@ model user {
   phone     String?
   settings  Json?    // User preferences and settings
   createdAt DateTime @default(now())
+  isActive  Boolean  @default(true)
+  // Multi-tenant relation
+  tenantId  Int
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   driver    Driver?
 }
 
@@ -39,6 +65,10 @@ model Vehicle {
   capacity    Int
   isAvailable Boolean  @default(true)
   createdAt   DateTime @default(now())
+
+  // Multi-tenant relation
+  tenantId    Int
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   driver   Driver?    @relation("DriverVehicle")
   Shipment Shipment[]
@@ -51,6 +81,10 @@ model Driver {
   phone         String   @unique
   licenseNumber String   @unique
   createdAt     DateTime @default(now())
+
+  // Multi-tenant relation
+  tenantId      Int
+  tenant        Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   vehicle   Vehicle?   @relation("DriverVehicle", fields: [vehicleId], references: [id])
   vehicleId Int?       @unique
@@ -110,9 +144,99 @@ model Shipment {
   status              ShipmentStatus @default(PENDING)
   createdAt           DateTime      @default(now())
 
+  // Multi-tenant relation
+  tenantId            Int
+  tenant              Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
   driver   Driver? @relation(fields: [driverId], references: [id])
   driverId Int?
 
   vehicle   Vehicle? @relation(fields: [vehicleId], references: [id])
   vehicleId Int?
+}
+
+model GlobalSettings {
+  id        Int    @id @default(1)
+  data      Json
+  updatedAt DateTime @updatedAt
+}
+
+model Employee {
+  id            String   @id @default(uuid())
+  name          String
+  role          EmployeeRole
+  phone         String?
+  email         String?
+  aadharNumber  String?
+  address       String?
+  salary        Decimal
+  status        EmployeeStatus @default(ACTIVE)
+  dateOfJoining DateTime?
+  transporter   Tenant   @relation(fields: [transporterId], references: [id])
+  transporterId Int
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  expenses      Expense[]
+}
+
+enum EmployeeRole {
+  DRIVER
+  LOADER
+  MANAGER
+  SUPERVISOR
+  ACCOUNTANT
+  CLEANER
+  MECHANIC
+  SECURITY
+  HELPER
+  OTHER
+}
+
+enum EmployeeStatus {
+  ACTIVE
+  INACTIVE
+  ON_LEAVE
+  TERMINATED
+}
+
+model Expense {
+  id            String   @id @default(uuid())
+  title         String   // Added for expense title
+  amount        Decimal
+  category      ExpenseCategory
+  description   String?
+  date          DateTime
+  status        ExpenseStatus @default(PENDING)
+  transporter   Tenant   @relation(fields: [transporterId], references: [id])
+  transporterId Int
+  employee      Employee? @relation(fields: [employeeId], references: [id])
+  employeeId    String?
+  createdAt     DateTime @default(now())
+}
+
+enum ExpenseCategory {
+  FUEL
+  MAINTENANCE
+  SALARY
+  TOLL
+  INSURANCE
+  OFFICE_SUPPLIES
+  REPAIR
+  PARKING
+  FINES
+  TAX
+  RENT
+  UTILITIES
+  LOAN_PAYMENT
+  COMMISSION
+  TRAINING
+  MEDICAL
+  OTHER
+}
+
+enum ExpenseStatus {
+  PENDING
+  APPROVED
+  PAID
+  REJECTED
 }

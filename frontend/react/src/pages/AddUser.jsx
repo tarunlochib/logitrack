@@ -1,158 +1,93 @@
-import React, { useState } from 'react';
-import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
-import ModernContentCard from '../components/ModernContentCard';
-import ModernInput from '../components/ModernInput';
-import ModernButton from '../components/ModernButton';
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { apiFetch } from "../api";
+import Layout from "../components/Layout";
+import ModernInput from "../components/ModernInput";
+import ModernSelect from "../components/ModernSelect";
+import ModernButton from "../components/ModernButton";
 
-const roles = ['SUPERADMIN', 'ADMIN', 'DISPATCHER', 'DRIVER'];
-
-const AddUser = () => {
-  const [form, setForm] = useState({
-    name: '',
-    email: '',
-    password: '',
-    phone: '',
-    role: 'DISPATCHER',
-    licenseNumber: '',
+export default function AddUser() {
+  const user = JSON.parse(localStorage.getItem("user"));
+  const navigate = useNavigate();
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    password: "",
+    role: "DISPATCHER",
+    licenseNumber: "",
   });
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
-  const [formDisabled, setFormDisabled] = useState(false);
-  const navigate = useNavigate();
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+
+  useEffect(() => {
+    if (!user || user.role !== "ADMIN") {
+      navigate("/dashboard");
+    }
+  }, [user, navigate]);
 
   const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setError('');
-    setSuccess('');
+    setError("");
+    setSuccess("");
     try {
-      const token = localStorage.getItem('token');
-      // Only send licenseNumber if role is DRIVER
-      const payload = { ...form };
-      if (form.role !== 'DRIVER') delete payload.licenseNumber;
-      await axios.post(
-        `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/auth/signup`,
-        payload,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-      setSuccess('User created successfully! Redirecting...');
-      setFormDisabled(true);
-      setTimeout(() => navigate('/dashboard'), 1500);
+      const res = await apiFetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/users`, {
+        method: "POST",
+        body: JSON.stringify(formData),
+      });
+      if (!res.ok) throw new Error((await res.json()).message || "Failed to create user");
+      setSuccess("User created successfully!");
+      setFormData({ name: "", email: "", phone: "", password: "", role: "DISPATCHER", licenseNumber: "" });
     } catch (err) {
-      setError(
-        err.response?.data?.message || 'Failed to create user. Please try again.'
-      );
+      setError(err.message || "Failed to create user");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-cyan-50 via-white to-blue-50">
-      <ModernContentCard className="w-full max-w-lg p-10">
-        <ModernButton
-          type="button"
-          variant="secondary"
-          size="sm"
-          className="mb-4"
-          onClick={() => navigate(-1)}
-        >
-          ← Back
-        </ModernButton>
-        <h2 className="text-2xl font-bold text-gray-900 mb-8 text-center">Add New User</h2>
-        {success ? (
-          <div className="bg-green-50 border border-green-200 text-green-700 rounded p-4 text-center text-lg font-semibold">{success}</div>
-        ) : (
-        <form onSubmit={handleSubmit} className="space-y-5" disabled={formDisabled}>
-          <ModernInput
-            type="text"
-            name="name"
-            value={form.name}
+    <Layout>
+      <div className="max-w-xl mx-auto p-6 bg-white rounded-xl shadow border mt-8">
+        <h2 className="text-2xl font-bold mb-4">Create Tenant User</h2>
+        {error && <div className="bg-red-100 text-red-700 px-4 py-2 rounded mb-3">{error}</div>}
+        {success && <div className="bg-green-100 text-green-700 px-4 py-2 rounded mb-3">{success}</div>}
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <ModernInput name="name" label="Name" value={formData.name} onChange={handleChange} required />
+          <ModernInput name="email" label="Email" value={formData.email} onChange={handleChange} required />
+          <ModernInput name="phone" label="Phone" value={formData.phone} onChange={handleChange} required />
+          <ModernInput name="password" label="Password" value={formData.password} onChange={handleChange} required type="password" />
+          <ModernSelect
+            name="role"
+            label="Role"
+            value={formData.role}
             onChange={handleChange}
-            placeholder="Full Name"
-            required
-            autoFocus
-            disabled={formDisabled}
+            options={[
+              { value: "DISPATCHER", label: "Dispatcher" },
+              { value: "DRIVER", label: "Driver" },
+            ]}
           />
-          <ModernInput
-            type="email"
-            name="email"
-            value={form.email}
-            onChange={handleChange}
-            placeholder="Email"
-            required
-            disabled={formDisabled}
-          />
-          <ModernInput
-            type="password"
-            name="password"
-            value={form.password}
-            onChange={handleChange}
-            placeholder="Password"
-            required
-            disabled={formDisabled}
-          />
-          <ModernInput
-            type="text"
-            name="phone"
-            value={form.phone}
-            onChange={handleChange}
-            placeholder="Phone Number"
-            disabled={formDisabled}
-          />
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Role</label>
-            <select
-              name="role"
-              value={form.role}
-              onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
-              required
-              disabled={formDisabled}
-            >
-              {roles.map((role) => (
-                <option key={role} value={role}>
-                  {role.charAt(0) + role.slice(1).toLowerCase()}
-                </option>
-              ))}
-            </select>
-          </div>
-          {form.role === 'DRIVER' && (
-            <ModernInput
-              type="text"
-              name="licenseNumber"
-              value={form.licenseNumber}
-              onChange={handleChange}
-              placeholder="License Number"
-              required
-              disabled={formDisabled}
+          {formData.role === "DRIVER" && (
+            <ModernInput 
+              name="licenseNumber" 
+              label="License Number" 
+              value={formData.licenseNumber} 
+              onChange={handleChange} 
+              required 
+              placeholder="Enter driver's license number"
             />
           )}
-          {error && <div className="bg-red-50 border border-red-200 text-red-700 rounded p-2 text-sm text-center">{error}</div>}
-          <ModernButton
-            type="submit"
-            variant="primary"
-            size="lg"
-            className="w-full rounded-full text-lg font-semibold py-3 shadow-md bg-cyan-600 hover:bg-cyan-700 flex justify-center"
-            disabled={loading || formDisabled}
-          >
-            {loading ? 'Creating...' : <span className="mx-auto">Create User</span>}
+          <ModernButton type="submit" disabled={loading}>
+            {loading ? "Creating..." : "Create User"}
           </ModernButton>
         </form>
-        )}
-      </ModernContentCard>
-    </div>
+      </div>
+    </Layout>
   );
-};
-
-export default AddUser; 
+} 

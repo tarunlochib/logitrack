@@ -6,7 +6,7 @@ const prisma = new PrismaClient();
 // Sign Up Controller
 
 const signup = async (req, res) => {
-    const {name, email, password, role, phone, licenseNumber} = req.body;
+    const {name, email, password, role, phone, licenseNumber, tenantId} = req.body;
 
     try {
         const existinguser  = await prisma.user.findUnique({ where: { email } });
@@ -22,7 +22,8 @@ const signup = async (req, res) => {
                 email,
                 password: hashedPassword,
                 role,
-                phone
+                phone,
+                tenantId: tenantId || req.tenant?.id
             }
         });
 
@@ -33,7 +34,8 @@ const signup = async (req, res) => {
                     userId: user.id,
                     name,
                     phone,
-                    licenseNumber
+                    licenseNumber,
+                    tenantId: tenantId || req.tenant?.id
                 }
             });
         }
@@ -50,15 +52,42 @@ const signup = async (req, res) => {
 const login = async (req, res) => {
     const { email, password } = req.body;
     try {
-        const user = await prisma.user.findUnique({ where: { email } });
+        const user = await prisma.user.findUnique({ 
+            where: { email },
+            include: {
+                tenant: {
+                    select: {
+                        id: true,
+                        name: true,
+                        slug: true,
+                        isActive: true
+                    }
+                }
+            }
+        });
+        
         if(!user) return res.status(404).json({ message: "user not found"});
+
+        // Check if user belongs to the correct tenant (if tenant is identified)
+        if (req.tenant && user.tenantId !== req.tenant.id) {
+            return res.status(403).json({ message: 'Access denied for this tenant' });
+        }
+
+        // Check if tenant is active
+        if (user.tenant && !user.tenant.isActive) {
+            return res.status(403).json({ message: 'Tenant account is inactive' });
+        }
 
         const isMatch = await bcrypt.compare(password, user.password);
         if(!isMatch) {
             return res.status(401).json({ message: 'Invalid credentials' });
         };
 
-        const token = jwt.sign({ id: user.id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '1h' });
+        const token = jwt.sign({ 
+            id: user.id, 
+            role: user.role, 
+            tenantId: user.tenantId 
+        }, process.env.JWT_SECRET, { expiresIn: '1h' });
 
         res.json({
             message: 'Login successful',
@@ -68,7 +97,9 @@ const login = async (req, res) => {
                 name: user.name,
                 email: user.email,
                 role: user.role,
-                phone: user.phone
+                phone: user.phone,
+                tenantId: user.tenantId,
+                tenant: user.tenant
             }
         }); } catch (error) { 
             console.error('Error during login:', error);

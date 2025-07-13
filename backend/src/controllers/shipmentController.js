@@ -61,6 +61,7 @@ const createShipment = async (req, res) => {
                 ewayBillNumber,
                 driverId: driverId ? parseInt(driverId) : null, // Ensure driverId is stored as an integer
                 vehicleId: vehicleId ? parseInt(vehicleId) : null, // Ensure vehicleId is stored as an integer
+                tenantId: req.tenant.id
             },
         });
 
@@ -128,7 +129,7 @@ const getShipments = async (req, res) => {
             advancedFilters.destination = { contains: destination, mode: 'insensitive' };
         }
 
-        let where = { ...searchFilter, ...advancedFilters };
+        let where = { ...searchFilter, ...advancedFilters, tenantId: req.tenant.id };
         if (req.user.role === 'DRIVER') {
             // Find the driver's record for this user
             const driver = await prisma.driver.findUnique({
@@ -163,8 +164,13 @@ const getShipmentById = async (req, res) => {
     const { id } = req.params;
 
     try {
-        const shipment = await prisma.shipment.findUnique({
-            where: { id: parseInt(id) },
+        // Check if tenant is available
+        if (!req.tenant || !req.tenant.id) {
+            return res.status(400).json({ message: 'Tenant identification required' });
+        }
+
+        const shipment = await prisma.shipment.findFirst({
+            where: { id: parseInt(id), tenantId: req.tenant.id },
             include: {
                 driver: true, // Include driver details
                 vehicle: true, // Include vehicle details
@@ -215,6 +221,16 @@ const updateShipment = async (req, res) => {
     } = req.body;
 
     try {
+        // Check if tenant is available
+        if (!req.tenant || !req.tenant.id) {
+            return res.status(400).json({ message: 'Tenant identification required' });
+        }
+
+        // Ensure the shipment belongs to the tenant
+        const existing = await prisma.shipment.findFirst({ where: { id: parseInt(id), tenantId: req.tenant.id } });
+        if (!existing) {
+            return res.status(404).json({ message: 'Shipment not found for this tenant' });
+        }
         const shipment = await prisma.shipment.update({
             where: { id: parseInt(id) },
             data: {
@@ -263,11 +279,18 @@ const deleteShipment = async (req, res) => {
     const { id } = req.params;
 
     try {
-        const shipment = await prisma.shipment.delete({
-            where: { id: parseInt(id) },
-        });
+        // Check if tenant is available
+        if (!req.tenant || !req.tenant.id) {
+            return res.status(400).json({ message: 'Tenant identification required' });
+        }
 
-        res.json({ message: 'Shipment deleted successfully', shipment });
+        // Ensure the shipment belongs to the tenant
+        const shipment = await prisma.shipment.findFirst({ where: { id: parseInt(id), tenantId: req.tenant.id } });
+        if (!shipment) {
+            return res.status(404).json({ message: 'Shipment not found for this tenant' });
+        }
+        const deleted = await prisma.shipment.delete({ where: { id: parseInt(id) } });
+        res.json({ message: 'Shipment deleted successfully', shipment: deleted });
     } catch (error) {
         console.error('Error deleting shipment:', error);
         res.status(500).json({ message: 'Internal server error' });
@@ -277,6 +300,11 @@ const deleteShipment = async (req, res) => {
 //search shipments logic
 const searchShipments = async (req, res) => {
     try {
+        // Check if tenant is available
+        if (!req.tenant || !req.tenant.id) {
+            return res.status(400).json({ message: 'Tenant identification required' });
+        }
+
         const {
             fromDate,
             toDate,
@@ -288,7 +316,7 @@ const searchShipments = async (req, res) => {
             transportName
         }   = req.query;
 
-        const   filters = {};
+        const   filters = { tenantId: req.tenant.id };
 
         if (fromDate && toDate) {
             filters.date = {

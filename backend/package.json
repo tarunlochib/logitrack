@@ -7,7 +7,9 @@
     "dev": "nodemon src/index",
     "start": "node src/index.js",
     "build": "prisma generate",
-    "postinstall": "prisma generate"
+    "postinstall": "prisma generate",
+    "setup": "node scripts/setup-database.js",
+    "create-superadmin": "node scripts/create-superadmin.js"
   },
   "keywords": [],
   "author": "",
@@ -19,6 +21,7 @@
     "cors": "^2.8.5",
     "dotenv": "^17.1.0",
     "express": "^5.1.0",
+    "express-validator": "^7.2.1",
     "jsonwebtoken": "^9.0.2",
     "pdfkit": "^0.17.1"
   },

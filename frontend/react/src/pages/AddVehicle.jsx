@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
+import { apiFetch } from "../api";
 import Layout from "../components/Layout";
 import ModernInput from "../components/ModernInput";
 import ModernButton from "../components/ModernButton";
@@ -51,24 +51,15 @@ export default function AddVehicle() {
         };
 
         try {
-            const token = localStorage.getItem("token");
-            await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/vehicles`, payload, {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
+            await apiFetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/vehicles`, {
+                method: 'POST',
+                body: JSON.stringify(payload),
             });
 
             alert("Vehicle added successfully");
             navigate("/vehicles");
         } catch (error) {
-            if (
-                error.response?.data?.message?.includes("Unique constraint failed") &&
-                error.response?.data?.message?.includes("number")
-            ) {
-                alert("A vehicle with this number already exists. Please use a unique vehicle number.");
-            } else {
-                alert("Failed to add vehicle. Please try again.");
-            }
+            alert("Failed to add vehicle. Please try again.");
             console.error("Error adding vehicle:", error);
         } finally {
             setLoading(false);
@@ -77,63 +68,67 @@ export default function AddVehicle() {
 
     return (
         <Layout>
-            <div className="max-h-[calc(100vh-100px)] overflow-y-auto p-4 bg-white/80 border border-gray-100 rounded-2xl shadow-md">
-                <h1 className="text-2xl font-bold mb-6">Add New Vehicle</h1>
-                <form onSubmit={handleSubmit} className="max-w-2xl">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                            <ModernInput
-                                label="Vehicle Number"
-                                name="number"
-                                value={formData.number}
-                                onChange={handleChange}
-                                placeholder="e.g., MH12AB1234"
-                                required
-                            />
-                        </div>
-                        <div>
-                            <ModernInput
-                                label="Model"
-                                name="model"
-                                value={formData.model}
-                                onChange={handleChange}
-                                placeholder="e.g., Tata 407"
-                                required
-                            />
-                        </div>
-                        <div>
-                            <ModernInput
-                                label="Capacity (tons)"
-                                name="capacity"
-                                type="number"
-                                value={formData.capacity}
-                                onChange={handleChange}
-                                placeholder="e.g., 5"
-                                min="0.1"
-                                step="0.1"
-                                required
-                            />
-                        </div>
+            <div className="min-h-screen bg-gray-50">
+                <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                    <div className="bg-white rounded-2xl shadow border border-gray-100 px-6 py-6 mb-8">
+                        <h1 className="text-xl font-semibold text-gray-900 mb-0">Add New Vehicle</h1>
                     </div>
-                    <div className="mt-6 flex space-x-4">
-                        <ModernButton
-                            type="submit"
-                            variant="primary"
-                            size="md"
-                            disabled={loading}
-                        >
-                            {loading ? "Adding Vehicle..." : "Add Vehicle"}
-                        </ModernButton>
-                        <ModernButton
-                            type="button"
-                            variant="secondary"
-                            size="md"
-                            onClick={() => navigate("/vehicles")}
-                        >
-                            Cancel
-                        </ModernButton>
+                    <div className="bg-white rounded-2xl shadow border border-gray-100 px-6 py-8">
+                        <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <ModernInput
+                                    label="Vehicle Number"
+                                    name="number"
+                                    value={formData.number}
+                                    onChange={handleChange}
+                                    placeholder="e.g., MH12AB1234"
+                                    required
+                                />
+                            </div>
+                            <div>
+                                <ModernInput
+                                    label="Model"
+                                    name="model"
+                                    value={formData.model}
+                                    onChange={handleChange}
+                                    placeholder="e.g., Tata 407"
+                                    required
+                                />
+                            </div>
+                            <div>
+                                <ModernInput
+                                    label="Capacity (tons)"
+                                    name="capacity"
+                                    type="number"
+                                    value={formData.capacity}
+                                    onChange={handleChange}
+                                    placeholder="e.g., 5"
+                                    min="0.1"
+                                    step="0.1"
+                                    required
+                                />
+                            </div>
+                            <div className="md:col-span-2 flex flex-wrap gap-3 justify-end mt-4">
+                                <ModernButton
+                                    type="button"
+                                    variant="secondary"
+                                    onClick={() => navigate('/vehicles')}
+                                    className="text-sm font-medium rounded-lg px-4 py-2 shadow-none"
+                                >
+                                    Cancel
+                                </ModernButton>
+                                <ModernButton
+                                    type="submit"
+                                    variant="primary"
+                                    loading={loading}
+                                    className="text-sm font-medium rounded-lg px-4 py-2 shadow-none"
+                                >
+                                    {loading ? 'Adding Vehicle...' : 'Add Vehicle'}
+                                </ModernButton>
+                            </div>
+                        </form>
                     </div>
-                </form>
+                </div>
             </div>
         </Layout>
     );

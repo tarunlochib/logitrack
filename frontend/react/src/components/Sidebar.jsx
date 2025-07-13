@@ -1,57 +1,67 @@
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import ModernButton from "./ModernButton";
 
-export default function Sidebar() {
+export default function Sidebar({ onClose }) {
     const navigate = useNavigate();
     const location = useLocation();
     const user = JSON.parse(localStorage.getItem("user"));
-    const role = user?.role;
 
-    const handleLogout = () => {
-        localStorage.removeItem("token");
-        localStorage.removeItem("user");
-        navigate("/");
+    // Role-based navigation links
+    const getNavLinks = () => {
+        if (!user) return [];
+
+        switch (user.role) {
+            case 'ADMIN':
+                return [
+                    { label: 'Dashboard', to: '/dashboard', icon: '🏠' },
+                    { label: 'Shipments', to: '/shipments', icon: '📦' },
+                    { label: 'Vehicles', to: '/vehicles', icon: '🚛' },
+                    { label: 'Drivers', to: '/drivers', icon: '👨‍💼' },
+                    { label: 'Employees', to: '/employees', icon: '👥' },
+                    { label: 'Expenses', to: '/expenses', icon: '💰' },
+                    { label: 'Analytics', to: '/analytics', icon: '📊' },
+                    { label: 'P&L Statement', to: '/profit-loss', icon: '📈' },
+                    { label: 'Add User', to: '/add-user', icon: '👤' },
+                ];
+            case 'DISPATCHER':
+                return [
+                    { label: 'Dashboard', to: '/dashboard', icon: '🏠' },
+                    { label: 'Shipments', to: '/shipments', icon: '📦' },
+                    { label: 'Vehicles', to: '/vehicles', icon: '🚛' },
+                    { label: 'Drivers', to: '/drivers', icon: '👨‍💼' },
+                ];
+            case 'DRIVER':
+                return [
+                    { label: 'Dashboard', to: '/dashboard', icon: '🏠' },
+                    { label: 'Shipments', to: '/shipments', icon: '📦' },
+                ];
+            default:
+                return [];
+        }
     };
 
-    const navLinks = [
-        { to: "/dashboard", label: "Dashboard", roles: ["SUPERADMIN", "ADMIN", "DISPATCHER", "DRIVER"] },
-        { to: "/shipments", label: "Shipments", roles: ["SUPERADMIN", "ADMIN", "DISPATCHER", "DRIVER"] },
-        { to: "/vehicles", label: "Vehicles", roles: ["SUPERADMIN", "ADMIN"] },
-        { to: "/drivers", label: "Drivers", roles: ["SUPERADMIN", "ADMIN"] },
-        { to: "/analytics", label: "Analytics", roles: ["SUPERADMIN", "ADMIN", "DISPATCHER"] },
-    ];
+    const navLinks = getNavLinks();
+
+    const isActive = (href) => {
+        return location.pathname === href;
+    };
 
     return (
-        <div className="fixed md:static top-0 left-0 z-40 h-full w-64 bg-gray-900/90 text-white border-r border-gray-800 shadow-2xl rounded-r-2xl p-5 flex flex-col justify-between transition-transform duration-300 backdrop-blur-md">
-            <div>
-                <h2 className="text-2xl font-bold mb-8 text-white">LogiTrack</h2>
-                <nav className="flex flex-col space-y-2">
-                    {navLinks.filter(link => link.roles.includes(role)).map(link => (
-                        <Link
-                            key={link.to}
-                            to={link.to}
-                            className={`px-3 py-2 rounded-lg font-medium transition-colors duration-150 ${location.pathname.startsWith(link.to) ? "bg-cyan-500 text-white shadow" : "text-white/80 hover:bg-cyan-700 hover:text-white"}`}
-                        >
-                            {link.label}
-                        </Link>
-                    ))}
-                </nav>
-            </div>
-            <div className="flex flex-col space-y-3 mt-8">
-                {role === 'SUPERADMIN' && (
-                    <ModernButton
-                        variant="primary"
-                        size="md"
-                        className="w-full justify-center bg-cyan-600 hover:bg-cyan-700 text-white border-none"
-                        onClick={() => {
-                            navigate('/add-user');
-                        }}
-                    >
-                        <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4"></path></svg>
-                        Add User
-                    </ModernButton>
-                )}
-            </div>
-        </div>
+        <nav className="flex-1 space-y-2 px-4 py-6">
+            {navLinks.map((item) => (
+                <Link
+                    key={item.label}
+                    to={item.to}
+                    className={`group flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-all duration-200 ${
+                        isActive(item.to)
+                            ? 'bg-gradient-to-r from-purple-500 to-violet-600 text-white shadow-lg shadow-purple-500/25'
+                            : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900 hover:shadow-md'
+                    }`}
+                    onClick={onClose}
+                >
+                    <span className={`mr-3 text-lg ${isActive(item.to) ? 'text-white' : 'text-gray-400 group-hover:text-gray-600'}`}>{item.icon}</span>
+                    {item.label}
+                </Link>
+            ))}
+        </nav>
     );
 }

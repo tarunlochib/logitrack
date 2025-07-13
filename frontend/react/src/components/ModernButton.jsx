@@ -19,19 +19,30 @@ export default function ModernButton({
   size = "md",
   className = "",
   type = "button",
+  loading = false,
   ...props
 }) {
   return (
     <button
       type={type}
       onClick={onClick}
+      disabled={loading}
       className={`inline-flex items-center gap-2 rounded-lg shadow-sm font-semibold focus:outline-none focus:ring-2 focus:ring-blue-400 transition-colors duration-150 ${
         variantStyles[variant] || variantStyles.primary
-      } ${sizeStyles[size] || sizeStyles.md} ${className}`.trim()}
+      } ${sizeStyles[size] || sizeStyles.md} ${loading ? 'opacity-50 cursor-not-allowed' : ''} ${className}`.trim()}
       {...props}
     >
-      {icon && <span className="flex-shrink-0">{icon}</span>}
-      {children}
+      {loading ? (
+        <>
+          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+          Loading...
+        </>
+      ) : (
+        <>
+          {icon && <span className="flex-shrink-0">{icon}</span>}
+          {children}
+        </>
+      )}
     </button>
   );
 } 

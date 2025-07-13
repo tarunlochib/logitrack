@@ -8,6 +8,13 @@
  const vehicleRoutes = require('./routes/vehicleRoutes');
  const driverRoutes = require('./routes/driverRoutes');
  const shipmentRoutes = require('./routes/shipmentRoutes');
+ const tenantRoutes = require('./routes/tenantRoutes');
+ const { identifyTenant } = require('./middlewares/tenantMiddleware');
+ const userRoutes = require('./routes/userRoutes');
+ const superadminRoutes = require('./routes/superadminRoutes');
+ const employeeRoutes = require('./routes/employeeRoutes');
+ const expenseRoutes = require('./routes/expenseRoutes');
+ const analyticsRoutes = require('./routes/analyticsRoutes');
 
 
  // Load environment variables from .env file
@@ -19,6 +26,7 @@
  // Middleware to parse JSON bodies
  app.use(cors()); //Allow Frontend to access the API
  app.use(express.json()); // Parse JSON bodies
+ app.use(identifyTenant);
 
  // Test route
     app.get('/', (req, res) => {
@@ -38,11 +46,22 @@
     }
     ); 
 
+    app.use('/api/tenants', tenantRoutes); // Tenant management routes
+
     app.use('/api/vehicles', vehicleRoutes); // Vehicle routes
 
     app.use('/api/drivers', driverRoutes); // Driver routes
 
     app.use('/api/shipments', shipmentRoutes); // Shipment routes
+
+    app.use('/api/users', userRoutes);
+
+    app.use('/api/employees', employeeRoutes);
+    app.use('/api/expenses', expenseRoutes);
+    app.use('/api/analytics', analyticsRoutes);
+
+    // Superadmin routes (no tenant middleware needed)
+    app.use('/api/superadmin', superadminRoutes);
 
 
 // Start the server

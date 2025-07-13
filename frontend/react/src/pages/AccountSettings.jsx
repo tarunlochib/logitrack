@@ -1,21 +1,12 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import axios from "axios";
-import ModernContentCard from "../components/ModernContentCard";
-import ModernButton from "../components/ModernButton";
+import Layout from "../components/Layout";
 import ModernInput from "../components/ModernInput";
+import ModernButton from "../components/ModernButton";
+import ModernSelect from "../components/ModernSelect";
+import { apiFetch } from "../api";
+import { FaCog, FaBell, FaLock, FaTrash, FaCloudDownloadAlt, FaShieldAlt, FaUserShield, FaEye } from 'react-icons/fa';
 
 export default function AccountSettings() {
-    const navigate = useNavigate();
-    const [user, setUser] = useState(null);
-    const [isChangingPassword, setIsChangingPassword] = useState(false);
-    const [isLoading, setIsLoading] = useState(false);
-    const [message, setMessage] = useState({ type: '', text: '' });
-    const [passwordData, setPasswordData] = useState({
-        currentPassword: "",
-        newPassword: "",
-        confirmPassword: ""
-    });
     const [settings, setSettings] = useState({
         emailNotifications: true,
         pushNotifications: false,
@@ -24,382 +15,375 @@ export default function AccountSettings() {
         language: 'en',
         theme: 'light'
     });
+    const [loading, setLoading] = useState(true);
+    const [saving, setSaving] = useState(false);
+    const [message, setMessage] = useState("");
 
     useEffect(() => {
-        const userData = JSON.parse(localStorage.getItem("user"));
-        if (!userData) {
-            navigate("/login");
-            return;
-        }
-        setUser(userData);
-        loadUserSettings();
-    }, [navigate]);
+        fetchSettings();
+    }, []);
 
-    const loadUserSettings = async () => {
+    const fetchSettings = async () => {
         try {
-            const token = localStorage.getItem("token");
-            const response = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/auth/settings`, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-            if (response.data.settings) {
-                setSettings(response.data.settings);
-            }
+            const response = await apiFetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/auth/settings`);
+            const data = await response.json();
+            setSettings(data.settings || settings);
         } catch (error) {
-            console.error("Error loading settings:", error);
+            console.error("Error fetching settings:", error);
+        } finally {
+            setLoading(false);
         }
     };
 
-    const saveSettings = async (newSettings) => {
+    const handleSaveSettings = async () => {
+        setSaving(true);
+        setMessage("");
+
         try {
-            setIsLoading(true);
-            const token = localStorage.getItem("token");
-            await axios.put(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/auth/settings`, 
-                { settings: newSettings },
-                { headers: { Authorization: `Bearer ${token}` } }
-            );
-            setSettings(newSettings);
-            setMessage({ type: 'success', text: 'Settings saved successfully!' });
-            setTimeout(() => setMessage({ type: '', text: '' }), 3000);
+            await apiFetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/auth/settings`, {
+                method: 'PUT',
+                body: JSON.stringify({ settings })
+            });
+            setMessage("Settings saved successfully!");
         } catch (error) {
             console.error("Error saving settings:", error);
-            setMessage({ type: 'error', text: 'Failed to save settings. Please try again.' });
-            setTimeout(() => setMessage({ type: '', text: '' }), 3000);
+            setMessage("Failed to save settings. Please try again.");
         } finally {
-            setIsLoading(false);
+            setSaving(false);
         }
     };
 
-    const handlePasswordChange = (e) => {
-        setPasswordData({
-            ...passwordData,
-            [e.target.name]: e.target.value
-        });
-    };
+    const handleChangePassword = async (e) => {
+        e.preventDefault();
+        setSaving(true);
+        setMessage("");
 
-    const handleSettingChange = async (setting, value) => {
-        const newSettings = {
-            ...settings,
-            [setting]: value
-        };
-        setSettings(newSettings);
-        await saveSettings(newSettings);
-    };
+        const formData = new FormData(e.target);
+        const currentPassword = formData.get('currentPassword');
+        const newPassword = formData.get('newPassword');
+        const confirmPassword = formData.get('confirmPassword');
 
-    const handlePasswordUpdate = async () => {
-        if (passwordData.newPassword !== passwordData.confirmPassword) {
-            setMessage({ type: 'error', text: 'New passwords don\'t match!' });
-            setTimeout(() => setMessage({ type: '', text: '' }), 3000);
+        if (newPassword !== confirmPassword) {
+            setMessage("New passwords do not match.");
+            setSaving(false);
             return;
         }
-        if (passwordData.newPassword.length < 6) {
-            setMessage({ type: 'error', text: 'Password must be at least 6 characters long!' });
-            setTimeout(() => setMessage({ type: '', text: '' }), 3000);
-            return;
-        }
+
         try {
-            setIsLoading(true);
-            const token = localStorage.getItem("token");
-            await axios.put(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/auth/change-password`, 
-                {
-                    currentPassword: passwordData.currentPassword,
-                    newPassword: passwordData.newPassword
-                },
-                { headers: { Authorization: `Bearer ${token}` } }
-            );
-            setMessage({ type: 'success', text: 'Password updated successfully!' });
-            setIsChangingPassword(false);
-            setPasswordData({
-                currentPassword: "",
-                newPassword: "",
-                confirmPassword: ""
+            await apiFetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/auth/change-password`, {
+                method: 'PUT',
+                body: JSON.stringify({ currentPassword, newPassword })
             });
-            setTimeout(() => setMessage({ type: '', text: '' }), 3000);
+            setMessage("Password changed successfully!");
+            e.target.reset();
         } catch (error) {
-            console.error("Error updating password:", error);
-            const errorMessage = error.response?.data?.message || 'Failed to update password. Please check your current password.';
-            setMessage({ type: 'error', text: errorMessage });
-            setTimeout(() => setMessage({ type: '', text: '' }), 3000);
+            console.error("Error changing password:", error);
+            setMessage("Failed to change password. Please check your current password.");
         } finally {
-            setIsLoading(false);
+            setSaving(false);
         }
     };
 
     const handleDeleteAccount = async () => {
-        if (window.confirm("Are you sure you want to delete your account? This action cannot be undone.")) {
-            try {
-                setIsLoading(true);
-                const token = localStorage.getItem("token");
-                await axios.delete(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/auth/delete-account`, {
-                    headers: { Authorization: `Bearer ${token}` }
-                });
-                localStorage.removeItem("token");
-                localStorage.removeItem("user");
-                navigate("/");
-            } catch (error) {
-                console.error("Error deleting account:", error);
-                setMessage({ type: 'error', text: 'Failed to delete account. Please try again.' });
-                setTimeout(() => setMessage({ type: '', text: '' }), 3000);
-            } finally {
-                setIsLoading(false);
-            }
+        if (!window.confirm("Are you sure you want to delete your account? This action cannot be undone.")) {
+            return;
+        }
+
+        setSaving(true);
+        setMessage("");
+
+        try {
+            await apiFetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/auth/delete-account`, {
+                method: 'DELETE'
+            });
+            localStorage.clear();
+            window.location.href = '/';
+        } catch (error) {
+            console.error("Error deleting account:", error);
+            setMessage("Failed to delete account. Please try again.");
+            setSaving(false);
         }
     };
 
     const handleExportData = async () => {
         try {
-            setIsLoading(true);
-            const token = localStorage.getItem("token");
-            const response = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/auth/export-data`, {
-                headers: { Authorization: `Bearer ${token}` },
-                responseType: 'blob'
-            });
-            const url = window.URL.createObjectURL(new Blob([response.data]));
-            const link = document.createElement('a');
-            link.href = url;
-            link.setAttribute('download', `user-data-${user.name}-${new Date().toISOString().split('T')[0]}.json`);
-            document.body.appendChild(link);
-            link.click();
-            link.remove();
-            setMessage({ type: 'success', text: 'Data exported successfully!' });
-            setTimeout(() => setMessage({ type: '', text: '' }), 3000);
+            const response = await apiFetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/auth/export-data`);
+            const data = await response.json();
+            
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'user-data.json';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
         } catch (error) {
             console.error("Error exporting data:", error);
-            setMessage({ type: 'error', text: 'Failed to export data. Please try again.' });
-            setTimeout(() => setMessage({ type: '', text: '' }), 3000);
-        } finally {
-            setIsLoading(false);
+            setMessage("Failed to export data. Please try again.");
         }
     };
 
-    if (!user) return null;
+    const handleSettingChange = (key, value) => {
+        setSettings(prev => ({ ...prev, [key]: value }));
+    };
+
+    if (loading) {
+        return (
+            <Layout>
+                <div className="flex items-center justify-center py-12">
+                    <div className="text-center">
+                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                        <p className="text-gray-600">Loading settings...</p>
+                    </div>
+                </div>
+            </Layout>
+        );
+    }
 
     return (
-        <div className="p-6 max-w-2xl mx-auto">
-            <h1 className="text-3xl font-bold text-gray-900 mb-8">Account Settings</h1>
-            <ModernContentCard>
-                <h2 className="text-2xl font-bold text-gray-900 mb-6">Security</h2>
-                <div className="space-y-6">
-                    <div>
-                        <h3 className="text-lg font-semibold text-gray-900 mb-4">Change Password</h3>
-                        {!isChangingPassword ? (
-                            <ModernButton
-                                onClick={() => setIsChangingPassword(true)}
-                                variant="primary"
-                                size="sm"
-                                disabled={isLoading}
-                            >
-                                Change Password
-                            </ModernButton>
-                        ) : (
-                            <div className="space-y-4 p-4 bg-gray-50 rounded-lg">
-                                <ModernInput
-                                    name="currentPassword"
-                                    type="password"
-                                    value={passwordData.currentPassword}
-                                    onChange={handlePasswordChange}
-                                    placeholder="Current password"
-                                    disabled={isLoading}
-                                />
-                                <ModernInput
-                                    name="newPassword"
-                                    type="password"
-                                    value={passwordData.newPassword}
-                                    onChange={handlePasswordChange}
-                                    placeholder="New password (min 6 characters)"
-                                    disabled={isLoading}
-                                />
-                                <ModernInput
-                                    name="confirmPassword"
-                                    type="password"
-                                    value={passwordData.confirmPassword}
-                                    onChange={handlePasswordChange}
-                                    placeholder="Confirm new password"
-                                    disabled={isLoading}
-                                />
-                                <div className="flex space-x-3">
-                                    <ModernButton
-                                        onClick={handlePasswordUpdate}
-                                        variant="primary"
-                                        size="sm"
-                                        disabled={isLoading}
-                                    >
-                                        {isLoading ? 'Updating...' : 'Update Password'}
-                                    </ModernButton>
-                                    <ModernButton
-                                        onClick={() => {
-                                            setIsChangingPassword(false);
-                                            setPasswordData({
-                                                currentPassword: "",
-                                                newPassword: "",
-                                                confirmPassword: ""
-                                            });
-                                        }}
-                                        variant="secondary"
-                                        size="sm"
-                                        disabled={isLoading}
-                                    >
-                                        Cancel
-                                    </ModernButton>
+        <Layout>
+            <div className="px-2 sm:px-4 md:px-6 py-6">
+                {/* Header Section */}
+                <div className="mb-8">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                        <div>
+                            <h1 className="text-2xl font-bold text-gray-900">Account Settings</h1>
+                            <p className="text-gray-600">Manage your account preferences and security settings</p>
+                        </div>
+                        <ModernButton 
+                            onClick={() => window.location.href = '/profile'}
+                            variant="secondary"
+                            className="flex items-center"
+                        >
+                            <FaEye className="mr-2" />
+                            Back to Profile
+                        </ModernButton>
+                    </div>
+                </div>
+
+                {/* Stats Cards */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4">
+                        <div className="flex items-center space-x-3">
+                            <div className="p-2 bg-blue-100 rounded-lg">
+                                <FaBell className="w-5 h-5 text-blue-600" />
+                            </div>
+                            <div>
+                                <p className="text-sm font-medium text-gray-600">Notifications</p>
+                                <p className="text-lg font-bold text-gray-900">
+                                    {settings.emailNotifications ? 'Enabled' : 'Disabled'}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4">
+                        <div className="flex items-center space-x-3">
+                            <div className="p-2 bg-green-100 rounded-lg">
+                                <FaShieldAlt className="w-5 h-5 text-green-600" />
+                            </div>
+                            <div>
+                                <p className="text-sm font-medium text-gray-600">Security</p>
+                                <p className="text-lg font-bold text-gray-900">
+                                    {settings.twoFactorAuth ? '2FA Enabled' : 'Standard'}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4">
+                        <div className="flex items-center space-x-3">
+                            <div className="p-2 bg-orange-100 rounded-lg">
+                                <FaUserShield className="w-5 h-5 text-orange-600" />
+                            </div>
+                            <div>
+                                <p className="text-sm font-medium text-gray-600">Session Timeout</p>
+                                <p className="text-lg font-bold text-gray-900">{settings.sessionTimeout}m</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    {/* Main Settings Area */}
+                    <div className="lg:col-span-2 space-y-6">
+                        {/* Notification Settings Card */}
+                        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                            <div className="flex items-center space-x-3 mb-6">
+                                <div className="p-2 bg-blue-100 rounded-lg">
+                                    <FaBell className="w-5 h-5 text-blue-600" />
+                                </div>
+                                <h2 className="text-lg font-semibold text-gray-900">Notification Settings</h2>
+                            </div>
+                            <div className="space-y-4">
+                                <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
+                                    <div>
+                                        <label className="text-sm font-medium text-gray-700">Email Notifications</label>
+                                        <p className="text-xs text-gray-500">Receive notifications via email</p>
+                                    </div>
+                                    <label className="inline-flex items-center cursor-pointer">
+                                        <input
+                                            type="checkbox"
+                                            checked={settings.emailNotifications}
+                                            onChange={(e) => handleSettingChange('emailNotifications', e.target.checked)}
+                                            className="sr-only peer"
+                                        />
+                                        <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-400 rounded-full peer peer-checked:bg-blue-500 transition-all duration-200"></div>
+                                    </label>
+                                </div>
+                                <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
+                                    <div>
+                                        <label className="text-sm font-medium text-gray-700">Push Notifications</label>
+                                        <p className="text-xs text-gray-500">Receive push notifications</p>
+                                    </div>
+                                    <label className="inline-flex items-center cursor-pointer">
+                                        <input
+                                            type="checkbox"
+                                            checked={settings.pushNotifications}
+                                            onChange={(e) => handleSettingChange('pushNotifications', e.target.checked)}
+                                            className="sr-only peer"
+                                        />
+                                        <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-400 rounded-full peer peer-checked:bg-blue-500 transition-all duration-200"></div>
+                                    </label>
                                 </div>
                             </div>
-                        )}
-                    </div>
-                    <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                        <div>
-                            <h3 className="text-lg font-semibold text-gray-900">Two-Factor Authentication</h3>
-                            <p className="text-sm text-gray-600">Add an extra layer of security to your account</p>
+                            <div className="mt-6 flex justify-end">
+                                <ModernButton
+                                    onClick={handleSaveSettings}
+                                    variant="primary"
+                                    loading={saving}
+                                    className="flex items-center"
+                                >
+                                    <FaCog className="mr-2" />
+                                    Save Settings
+                                </ModernButton>
+                            </div>
                         </div>
-                        <button
-                            onClick={() => handleSettingChange('twoFactorAuth', !settings.twoFactorAuth)}
-                            disabled={isLoading}
-                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                                settings.twoFactorAuth ? 'bg-cyan-600' : 'bg-gray-300'
-                            } ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
-                        >
-                            <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                                settings.twoFactorAuth ? 'translate-x-6' : 'translate-x-1'
-                            }`} />
-                        </button>
-                    </div>
-                </div>
-            </ModernContentCard>
-            <ModernContentCard>
-                <h2 className="text-2xl font-bold text-gray-900 mb-6">Notifications</h2>
-                <div className="space-y-4">
-                    <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                        <div>
-                            <h3 className="text-lg font-semibold text-gray-900">Email Notifications</h3>
-                            <p className="text-sm text-gray-600">Receive updates via email</p>
+
+                        {/* Change Password Card */}
+                        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                            <div className="flex items-center space-x-3 mb-6">
+                                <div className="p-2 bg-orange-100 rounded-lg">
+                                    <FaLock className="w-5 h-5 text-orange-600" />
+                                </div>
+                                <h2 className="text-lg font-semibold text-gray-900">Change Password</h2>
+                            </div>
+                            <form onSubmit={handleChangePassword} className="space-y-6">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <ModernInput
+                                        name="currentPassword"
+                                        label="Current Password"
+                                        type="password"
+                                        required
+                                        placeholder="Enter current password"
+                                    />
+                                    <ModernInput
+                                        name="newPassword"
+                                        label="New Password"
+                                        type="password"
+                                        required
+                                        placeholder="Enter new password"
+                                    />
+                                    <ModernInput
+                                        name="confirmPassword"
+                                        label="Confirm New Password"
+                                        type="password"
+                                        required
+                                        placeholder="Confirm new password"
+                                    />
+                                </div>
+                                <div className="flex justify-end">
+                                    <ModernButton
+                                        type="submit"
+                                        variant="primary"
+                                        loading={saving}
+                                        className="flex items-center"
+                                    >
+                                        <FaLock className="mr-2" />
+                                        Change Password
+                                    </ModernButton>
+                                </div>
+                            </form>
+                            {message && (
+                                <div className={`p-4 rounded-xl text-sm flex items-center gap-3 mt-4 ${
+                                    message.includes("successfully") 
+                                        ? "bg-green-50 text-green-700 border border-green-200" 
+                                        : "bg-red-50 text-red-700 border border-red-200"
+                                }`}>
+                                    {message.includes("successfully") ? (
+                                        <svg className="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                                    ) : (
+                                        <svg className="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                                    )}
+                                    {message}
+                                </div>
+                            )}
                         </div>
-                        <button
-                            onClick={() => handleSettingChange('emailNotifications', !settings.emailNotifications)}
-                            disabled={isLoading}
-                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                                settings.emailNotifications ? 'bg-cyan-600' : 'bg-gray-300'
-                            } ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
-                        >
-                            <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                                settings.emailNotifications ? 'translate-x-6' : 'translate-x-1'
-                            }`} />
-                        </button>
                     </div>
-                    <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                        <div>
-                            <h3 className="text-lg font-semibold text-gray-900">Push Notifications</h3>
-                            <p className="text-sm text-gray-600">Receive real-time notifications</p>
+
+                    {/* Sidebar */}
+                    <div className="space-y-6">
+                        {/* Security Overview Card */}
+                        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                            <div className="flex items-center space-x-3 mb-4">
+                                <div className="p-2 bg-cyan-100 rounded-lg">
+                                    <FaShieldAlt className="w-5 h-5 text-cyan-600" />
+                                </div>
+                                <h3 className="text-lg font-semibold text-gray-900">Security Overview</h3>
+                            </div>
+                            <div className="space-y-3">
+                                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                    <span className="text-sm text-gray-600">Two-Factor Auth</span>
+                                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                        settings.twoFactorAuth 
+                                            ? 'bg-green-100 text-green-700' 
+                                            : 'bg-gray-100 text-gray-700'
+                                    }`}>
+                                        {settings.twoFactorAuth ? 'Enabled' : 'Disabled'}
+                                    </span>
+                                </div>
+                                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                    <span className="text-sm text-gray-600">Session Timeout</span>
+                                    <span className="text-sm font-medium text-gray-900">{settings.sessionTimeout} minutes</span>
+                                </div>
+                                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                    <span className="text-sm text-gray-600">Theme</span>
+                                    <span className="text-sm font-medium text-gray-900 capitalize">{settings.theme}</span>
+                                </div>
+                            </div>
                         </div>
-                        <button
-                            onClick={() => handleSettingChange('pushNotifications', !settings.pushNotifications)}
-                            disabled={isLoading}
-                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                                settings.pushNotifications ? 'bg-cyan-600' : 'bg-gray-300'
-                            } ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
-                        >
-                            <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                                settings.pushNotifications ? 'translate-x-6' : 'translate-x-1'
-                            }`} />
-                        </button>
+
+                        {/* Data Management Card */}
+                        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                            <div className="flex items-center space-x-3 mb-4">
+                                <div className="p-2 bg-purple-100 rounded-lg">
+                                    <FaCloudDownloadAlt className="w-5 h-5 text-purple-600" />
+                                </div>
+                                <h3 className="text-lg font-semibold text-gray-900">Data Management</h3>
+                            </div>
+                            <div className="space-y-3">
+                                <ModernButton
+                                    onClick={handleExportData}
+                                    variant="secondary"
+                                    className="w-full justify-start"
+                                >
+                                    <FaCloudDownloadAlt className="mr-2" />
+                                    Export My Data
+                                </ModernButton>
+                                <ModernButton
+                                    onClick={handleDeleteAccount}
+                                    variant="secondary"
+                                    className="w-full justify-start text-red-600 border-red-200 hover:text-red-700"
+                                    loading={saving}
+                                >
+                                    <FaTrash className="mr-2" />
+                                    Delete Account
+                                </ModernButton>
+                            </div>
+                        </div>
                     </div>
                 </div>
-            </ModernContentCard>
-            <ModernContentCard>
-                <h2 className="text-2xl font-bold text-gray-900 mb-6">Preferences</h2>
-                <div className="space-y-4">
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Language</label>
-                        <select
-                            value={settings.language}
-                            onChange={(e) => handleSettingChange('language', e.target.value)}
-                            disabled={isLoading}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 disabled:opacity-50"
-                        >
-                            <option value="en">English</option>
-                            <option value="es">Español</option>
-                            <option value="fr">Français</option>
-                            <option value="de">Deutsch</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Theme</label>
-                        <select
-                            value={settings.theme}
-                            onChange={(e) => handleSettingChange('theme', e.target.value)}
-                            disabled={isLoading}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 disabled:opacity-50"
-                        >
-                            <option value="light">Light</option>
-                            <option value="dark">Dark</option>
-                            <option value="auto">Auto</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Session Timeout (minutes)</label>
-                        <select
-                            value={settings.sessionTimeout}
-                            onChange={(e) => handleSettingChange('sessionTimeout', parseInt(e.target.value))}
-                            disabled={isLoading}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 disabled:opacity-50"
-                        >
-                            <option value={15}>15 minutes</option>
-                            <option value={30}>30 minutes</option>
-                            <option value={60}>1 hour</option>
-                            <option value={120}>2 hours</option>
-                        </select>
-                    </div>
-                </div>
-            </ModernContentCard>
-            <ModernContentCard>
-                <h2 className="text-2xl font-bold text-gray-900 mb-6">Data Management</h2>
-                <div className="space-y-4">
-                    <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
-                        <h3 className="text-lg font-semibold text-gray-900 mb-2">Export Your Data</h3>
-                        <p className="text-sm text-gray-600 mb-4">Download all your data in JSON format</p>
-                        <ModernButton
-                            onClick={handleExportData}
-                            variant="primary"
-                            size="sm"
-                            disabled={isLoading}
-                        >
-                            {isLoading ? 'Exporting...' : 'Export Data'}
-                        </ModernButton>
-                    </div>
-                </div>
-            </ModernContentCard>
-            <ModernContentCard>
-                <h2 className="text-2xl font-bold text-red-600 mb-6">Danger Zone</h2>
-                <div className="space-y-4">
-                    <div className="p-4 bg-red-50 rounded-lg border border-red-200">
-                        <h3 className="text-lg font-semibold text-red-800 mb-2">Delete Account</h3>
-                        <p className="text-sm text-red-600 mb-4">Once you delete your account, there is no going back. Please be certain.</p>
-                        <ModernButton
-                            onClick={handleDeleteAccount}
-                            variant="danger"
-                            size="sm"
-                            disabled={isLoading}
-                        >
-                            {isLoading ? 'Deleting...' : 'Delete Account'}
-                        </ModernButton>
-                    </div>
-                </div>
-            </ModernContentCard>
-            {message.text && (
-                <div className={`p-4 rounded-lg ${
-                    message.type === 'success' ? 'bg-green-50 border border-green-200 text-green-800' :
-                    message.type === 'error' ? 'bg-red-50 border border-red-200 text-red-800' :
-                    'bg-blue-50 border border-blue-200 text-blue-800'
-                }`}>
-                    {message.text}
-                </div>
-            )}
-            <div className="flex justify-end mt-6">
-                <ModernButton
-                    onClick={() => navigate(-1)}
-                    variant="secondary"
-                    size="md"
-                >
-                    ← Back
-                </ModernButton>
             </div>
-        </div>
+        </Layout>
     );
 } 

@@ -11,7 +11,8 @@ const createVehicle = async (req, res) => {
             data: {
                 number,
                 model,
-                capacity: parseInt(capacity) // Ensure capacity is stored as an integer
+                capacity: parseInt(capacity), // Ensure capacity is stored as an integer
+                tenantId: req.tenant.id
             },
         });
         res.status(201).json({ message: 'Vehicle created successfully', vehicle });
@@ -25,6 +26,7 @@ const createVehicle = async (req, res) => {
 const getVehicles = async (req, res) => {
     try {
         const vehicles = await prisma.vehicle.findMany({
+            where: { tenantId: req.tenant.id },
             include: { 
                 driver: true, // Include driver details
                 Shipment: true // Include shipment details
