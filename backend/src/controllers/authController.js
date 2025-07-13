@@ -71,14 +71,17 @@ const login = async (req, res) => {
         
         if(!user) return res.status(404).json({ message: "user not found"});
 
-        // Check if user belongs to the correct tenant (if tenant is identified)
-        if (req.tenant && user.tenantId !== req.tenant.id) {
-            return res.status(403).json({ message: 'Access denied for this tenant' });
-        }
-
-        // Check if tenant is active
-        if (user.tenant && !user.tenant.isActive) {
-            return res.status(403).json({ message: 'Tenant account is inactive' });
+        // Only check tenant for non-SUPERADMIN users
+        if (user.role !== 'SUPERADMIN') {
+            if (req.tenant && user.tenantId !== req.tenant.id) {
+                return res.status(403).json({ message: 'Access denied for this tenant' });
+            }
+            if (user.tenant && !user.tenant.isActive) {
+                return res.status(403).json({ message: 'Tenant account is inactive' });
+            }
+            if (!user.tenant) {
+                return res.status(404).json({ message: 'Tenant not found' });
+            }
         }
 
         const isMatch = await bcrypt.compare(password, user.password);
@@ -104,10 +107,11 @@ const login = async (req, res) => {
                 tenantId: user.tenantId,
                 tenant: user.tenant
             }
-        }); } catch (error) { 
-            console.error('Error during login:', error);
-            res.status(500).json({ message: 'Internal server error' });
-}
+        }); 
+    } catch (error) { 
+        console.error('Error during login:', error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
 };
 
 const getDriverUsers = async (req, res) => {
