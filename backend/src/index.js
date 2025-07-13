@@ -26,7 +26,6 @@
  // Middleware to parse JSON bodies
  app.use(cors()); //Allow Frontend to access the API
  app.use(express.json()); // Parse JSON bodies
- app.use(identifyTenant);
 
  // Test route
     app.get('/', (req, res) => {
@@ -42,23 +41,19 @@
     app.use('/api/auth', authRoutes);
 
     app.get('/api/protected', verifyToken, (req, res) => {
-        res.send('Hello User ${req.user.id}, you have access to this protected route!');
+        res.send(`Hello User ${req.user.id}, you have access to this protected route!`);
     }
     ); 
 
-    app.use('/api/tenants', tenantRoutes); // Tenant management routes
-
-    app.use('/api/vehicles', vehicleRoutes); // Vehicle routes
-
-    app.use('/api/drivers', driverRoutes); // Driver routes
-
-    app.use('/api/shipments', shipmentRoutes); // Shipment routes
-
-    app.use('/api/users', userRoutes);
-
-    app.use('/api/employees', employeeRoutes);
-    app.use('/api/expenses', expenseRoutes);
-    app.use('/api/analytics', analyticsRoutes);
+    // Apply identifyTenant only to tenant-specific routes
+    app.use('/api/vehicles', identifyTenant, vehicleRoutes);
+    app.use('/api/drivers', identifyTenant, driverRoutes);
+    app.use('/api/shipments', identifyTenant, shipmentRoutes);
+    app.use('/api/users', identifyTenant, userRoutes);
+    app.use('/api/employees', identifyTenant, employeeRoutes);
+    app.use('/api/expenses', identifyTenant, expenseRoutes);
+    app.use('/api/analytics', identifyTenant, analyticsRoutes);
+    app.use('/api/tenants', tenantRoutes); // Apply as needed
 
     // Superadmin routes (no tenant middleware needed)
     app.use('/api/superadmin', superadminRoutes);
