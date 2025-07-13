@@ -4,6 +4,8 @@ const prisma = new PrismaClient();
 // Middleware to identify tenant from subdomain or custom header
 const identifyTenant = async (req, res, next) => {
     try {
+        // PROD DEBUG LOGGING
+        console.log('PROD DEBUG: All headers:', req.headers);
         let tenantSlug = null;
 
         // Method 1: Extract from subdomain
@@ -33,12 +35,16 @@ const identifyTenant = async (req, res, next) => {
             tenantSlug = req.query.tenant;
         }
 
+        console.log('PROD DEBUG: Received tenantSlug:', tenantSlug);
+
         if (tenantSlug) {
             // Find tenant by slug
             const tenant = await prisma.tenant.findUnique({
                 where: { slug: tenantSlug },
                 select: { id: true, name: true, slug: true, isActive: true }
             });
+
+            console.log('PROD DEBUG: Tenant found:', tenant);
 
             if (!tenant) {
                 return res.status(404).json({ message: 'Tenant not found' });
