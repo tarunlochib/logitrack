@@ -542,6 +542,22 @@ const getSuperadminShipmentById = async (req, res) => {
   }
 };
 
+// Get global settings
+const getGlobalSettings = async (req, res) => {
+    try {
+        const settings = await prisma.globalSettings.findUnique({
+            where: { id: 1 }
+        });
+        if (!settings) {
+            return res.status(404).json({ message: 'Global settings not found' });
+        }
+        res.json(settings);
+    } catch (error) {
+        console.error('Error fetching global settings:', error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+};
+
 module.exports = {
     createTransporter,
     getAllTransporters,
@@ -558,4 +574,5 @@ module.exports = {
     getTransporterStatusCounts,
     getAllShipments,
     getSuperadminShipmentById,
+    getGlobalSettings,
 }; 

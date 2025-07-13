@@ -33,6 +33,9 @@ router.get('/dashboard-stats', superadminController.getDashboardStats);
 // Get all users (with optional filters)
 router.get('/users', superadminController.getAllUsers);
 
+// Add global settings route
+router.get('/settings', superadminController.getGlobalSettings);
+
 router.get('/analytics/overview', verifyToken, authorizeRoles('SUPERADMIN'), getAnalyticsOverview);
 router.get('/analytics/top-transporters', verifyToken, authorizeRoles('SUPERADMIN'), getTopTransporters);
 router.get('/analytics/recent-shipments', verifyToken, authorizeRoles('SUPERADMIN'), getRecentShipments);
@@ -40,5 +43,8 @@ router.get('/analytics/user-growth', verifyToken, authorizeRoles('SUPERADMIN'), 
 router.get('/analytics/transporter-status', verifyToken, authorizeRoles('SUPERADMIN'), getTransporterStatusCounts);
 router.get('/shipments', getAllShipments);
 router.get('/shipments/:id', getSuperadminShipmentById);
+
+// Test route for debugging
+router.get('/test', (req, res) => res.json({ message: 'Superadmin test route works!' }));
 
 module.exports = router; 
